@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:gifts_manager/presentation/login/bloc/login_bloc.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: _LoginPageWidget(),
+    return BlocProvider(
+      create: (context) => LoginBloc(),
+      child: const Scaffold(
+        body: _LoginPageWidget(),
+      ),
     );
   }
 }
@@ -23,9 +28,9 @@ class _LoginPageWidget extends StatelessWidget {
         Spacer(flex: 64),
         Center(
             child: Text(
-          "Вход",
-          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 24),
-        )),
+              "Вход",
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 24),
+            )),
         Spacer(flex: 88),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 36),
@@ -46,7 +51,12 @@ class _LoginPageWidget extends StatelessWidget {
           child: SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () => debugPrint("Нажали кнопку войти"),
+              // передаем в bloc инфу о нажатии на кнопку
+              // read передает инфу в блок без подписки на изменение
+              onPressed: () =>
+                  context
+                      .read<LoginBloc>()
+                      .add(const LoginLoginButtonClicked()),
               child: Text('Войти'),
             ),
           ),
@@ -60,7 +70,6 @@ class _LoginPageWidget extends StatelessWidget {
               onPressed: () => debugPrint("Нажали кнопку создать"),
               child: Text('Создать'),
             ),
-
           ],
         ),
         const SizedBox(height: 8),
