@@ -12,14 +12,43 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   LoginBloc() : super(LoginState.initial()) {
     // при нажатии кнопки Войти переходим на экран Home
     on<LoginLoginButtonClicked>(_loginButtonClicked);
+    // валидации и проверки почты и пароля
+    on<LoginEmailChanged>(_emailChanged);
+    on<LoginPasswordChanged>(_passwordChanged);
   }
 
   FutureOr<void> _loginButtonClicked(
     LoginLoginButtonClicked event,
     Emitter<LoginState> emit,
   ) {
-    emit(state.copyWith(authenticated: true));
+    // если валидация почты и пароля прошла,
+    // то аунтефик завершена верно и переходим на HomePage
+    if (state.passwordValid && state.emailValid) {
+      emit(state.copyWith(authenticated: true));
+    }
   }
+
+  // валидация email
+  FutureOr<void> _emailChanged(
+    LoginEmailChanged event,
+    Emitter<LoginState> emit,
+  ) {
+    final newEmail = event.email; // эвент смен email
+    final emailValid = newEmail.length > 4;
+    emit(state.copyWith(email: newEmail, emailValid: emailValid));
+  }
+
+  // валидация password
+  FutureOr<void> _passwordChanged(
+    LoginPasswordChanged event,
+    Emitter<LoginState> emit,
+  ) {
+    final newPassword = event.password; // эвент смен password
+    final passwordValid = newPassword.length >= 8;
+    emit(state.copyWith(password: newPassword, passwordValid: passwordValid));
+  }
+
+  /*=== Для дебага===*/
 
   // для вывод всех евентов в консоль
   // удобно при дебаге
@@ -30,9 +59,9 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   }
 
   // метод, который позволяет какие транзишены есть
-@override
+  @override
   void onTransition(Transition<LoginEvent, LoginState> transition) {
-  debugPrint('Login Bloc. Transition happened: $transition');
+    debugPrint('Login Bloc. Transition happened: $transition');
     super.onTransition(transition);
   }
 }
