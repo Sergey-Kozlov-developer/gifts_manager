@@ -28,4 +28,11 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     debugPrint('Login Bloc. Event happened: $event');
     super.onEvent(event);
   }
+
+  // метод, который позволяет какие транзишены есть
+@override
+  void onTransition(Transition<LoginEvent, LoginState> transition) {
+  debugPrint('Login Bloc. Transition happened: $transition');
+    super.onTransition(transition);
+  }
 }
