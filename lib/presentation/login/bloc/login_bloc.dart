@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
@@ -21,12 +22,43 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   FutureOr<void> _loginButtonClicked(
     LoginLoginButtonClicked event,
     Emitter<LoginState> emit,
-  ) {
+  ) async {
     // если валидация почты и пароля прошла,
     // то аунтефик завершена верно и переходим на HomePage
-    if (state.passwordValid && state.emailValid) {
-      emit(state.copyWith(authenticated: true));
+    if (state.allFieldsValid) {
+      // имитируемый ответ от сервера response
+      final response =
+          await _login(email: state.email, password: state.password);
+      if (response == null) {
+        // возращение типа ошибки
+        emit(state.copyWith(authenticated: true));
+      } else {
+        switch (response) {
+          case LoginError.emailNotExist:
+            emit(state.copyWith(emailError: EmailError.notExist));
+            break;
+          case LoginError.wrongPassword:
+            emit(state.copyWith(passwordError: PasswordError.wrongPassword));
+            break;
+          // case LoginError.other:
+          //   emit(state.copyWith(o:  EmailError.notExist));
+          //   break;
+        }
+      }
     }
+  }
+
+  // обработка ошибок ввода
+  // ИМИТАЦИЯ РАБОТЫ СЕРВЕРА , на реальном проекте немного по другому
+  Future<LoginError?> _login({
+    required final String email,
+    required final String password,
+  }) async {
+    final successfulResponse = Random().nextBool();
+    if (successfulResponse) {
+      return null;
+    }
+    return LoginError.values[Random().nextInt(LoginError.values.length)];
   }
 
   // валидация email
@@ -36,7 +68,14 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   ) {
     final newEmail = event.email; // эвент смен email
     final emailValid = newEmail.length > 4;
-    emit(state.copyWith(email: newEmail, emailValid: emailValid));
+    emit(
+      state.copyWith(
+        email: newEmail,
+        emailValid: emailValid,
+        emailError: EmailError.noError, // сброс ошибки почты
+        authenticated: false,
+      ),
+    );
   }
 
   // валидация password
@@ -46,7 +85,14 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   ) {
     final newPassword = event.password; // эвент смен password
     final passwordValid = newPassword.length >= 8;
-    emit(state.copyWith(password: newPassword, passwordValid: passwordValid));
+    emit(
+      state.copyWith(
+        password: newPassword,
+        passwordValid: passwordValid,
+        passwordError: PasswordError.noError, // сброс ошибки пароля
+        authenticated: false,
+      ),
+    );
   }
 
   /*=== Для дебага===*/
@@ -66,3 +112,6 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     super.onTransition(transition);
   }
 }
+
+// для обработки ошибок
+enum LoginError { emailNotExist, wrongPassword }

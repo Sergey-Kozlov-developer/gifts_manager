@@ -19,6 +19,9 @@ class LoginState extends Equatable {
     required this.authenticated,
   });
 
+  // метод для валидации почты и пароля
+  bool get allFieldsValid => emailValid && passwordValid;
+
   // возвращает LoginState
   factory LoginState.initial() => const LoginState(
         email: '',

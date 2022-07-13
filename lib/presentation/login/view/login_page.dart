@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gifts_manager/presentation/home/view/home_page.dart';
 import 'package:gifts_manager/presentation/login/bloc/login_bloc.dart';
+import 'package:gifts_manager/presentation/login/model/email_error.dart';
+import 'package:gifts_manager/presentation/login/model/models.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -67,13 +69,13 @@ class _LoginPageWidgetState extends State<_LoginPageWidget> {
           )),
           Spacer(flex: 88),
           // ввод email
-          _EmailField(
+          _EmailTextField(
             emailFocusNode: _emailFocusNode,
             passwordFocusNode: _passwordFocusNode,
           ),
           const SizedBox(height: 8),
           // ввод password
-          _PasswordField(passwordFocusNode: _passwordFocusNode),
+          _PasswordTextField(passwordFocusNode: _passwordFocusNode),
           const SizedBox(height: 40),
           // кнопка войти
           _LoginButton(),
@@ -115,9 +117,7 @@ class _LoginButton extends StatelessWidget {
         // то при нажатии на кнопку Войти переходим на дом. экран
         // 2) пока не веедена почта с паролем, то кнопка неактивна
         child: BlocSelector<LoginBloc, LoginState, bool>(
-          selector: (state) {
-            return state.emailValid && state.passwordValid;
-          },
+          selector: (state) => state.allFieldsValid,
           builder: (context, fieldsValid) {
             return ElevatedButton(
               // 1) передаем в bloc инфу о нажатии на кнопку
@@ -136,8 +136,8 @@ class _LoginButton extends StatelessWidget {
   }
 }
 
-class _EmailField extends StatelessWidget {
-  const _EmailField({
+class _EmailTextField extends StatelessWidget {
+  const _EmailTextField({
     Key? key,
     required FocusNode emailFocusNode,
     required FocusNode passwordFocusNode,
@@ -152,23 +152,35 @@ class _EmailField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 36),
-      child: TextField(
-        // изменение фокуса поля ввода
-        focusNode: _emailFocusNode,
-        // логика ввода email
-        onChanged: (text) =>
-            context.read<LoginBloc>().add(LoginEmailChanged(text)),
-        // нажимаем на ОК после ввода email переходим на поле Пароль
-        onSubmitted: (_) => _passwordFocusNode.requestFocus(),
+      // подписка на ошибку ввода почты с помощью BlocSelector
+      child: BlocSelector<LoginBloc, LoginState, EmailError>(
+        selector: (state) => state.emailError,
+        builder: (context, emailError) {
+          return TextField(
+            // изменение фокуса поля ввода
+            focusNode: _emailFocusNode,
+            // логика ввода email
+            onChanged: (text) =>
+                context.read<LoginBloc>().add(LoginEmailChanged(text)),
+            // нажимаем на ОК после ввода email переходим на поле Пароль
+            onSubmitted: (_) => _passwordFocusNode.requestFocus(),
 
-        decoration: InputDecoration(hintText: 'Почта'),
+            decoration: InputDecoration(
+              hintText: 'Почта',
+              // вывод текста ошибки если неверно введена почта
+              errorText: emailError == EmailError.noError
+                  ? null
+                  : emailError.toString(),
+            ),
+          );
+        },
       ),
     );
   }
 }
 
-class _PasswordField extends StatelessWidget {
-  const _PasswordField({
+class _PasswordTextField extends StatelessWidget {
+  const _PasswordTextField({
     Key? key,
     required FocusNode passwordFocusNode,
   })  : _passwordFocusNode = passwordFocusNode,
@@ -180,15 +192,27 @@ class _PasswordField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 36),
-      child: TextField(
-        // изменение фокуса поля ввода
-        focusNode: _passwordFocusNode,
-        // логика ввода пароля
-        onChanged: (text) =>
-            context.read<LoginBloc>().add(LoginPasswordChanged(text)),
-        onSubmitted: (_) =>
-            context.read<LoginBloc>().add(const LoginLoginButtonClicked()),
-        decoration: InputDecoration(hintText: 'Пароль'),
+      // подписка на ошибку ввода пароля с помощью BlocSelector
+      child: BlocSelector<LoginBloc, LoginState, PasswordError>(
+        selector: (state) => state.passwordError,
+        builder: (context, passwordError) {
+          return TextField(
+            // изменение фокуса поля ввода
+            focusNode: _passwordFocusNode,
+            // логика ввода пароля
+            onChanged: (text) =>
+                context.read<LoginBloc>().add(LoginPasswordChanged(text)),
+            onSubmitted: (_) =>
+                context.read<LoginBloc>().add(const LoginLoginButtonClicked()),
+            decoration: InputDecoration(
+              hintText: 'Пароль',
+              // вывод текста ошибки если неверно введен пароль
+              errorText: passwordError == PasswordError.noError
+                  ? null
+                  : passwordError.toString(),
+            ),
+          );
+        },
       ),
     );
   }
