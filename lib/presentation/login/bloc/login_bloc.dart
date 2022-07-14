@@ -31,23 +31,23 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       // имитируемый ответ от сервера response
       final response =
           await _login(email: state.email, password: state.password);
-      emit(state.copyWith(requestError: RequestError.unknown));
-      // if (response == null) {
-      //   // возращение типа ошибки
-      //   emit(state.copyWith(authenticated: true));
-      // } else {
-      //   switch (response) {
-      //     case LoginError.emailNotExist:
-      //       emit(state.copyWith(emailError: EmailError.notExist));
-      //       break;
-      //     case LoginError.wrongPassword:
-      //       emit(state.copyWith(passwordError: PasswordError.wrongPassword));
-      //       break;
-      //     case LoginError.other:
-      //       emit(state.copyWith(requestError: RequestError.unknown));
-      //       break;
-      //   }
-      // }
+      // emit(state.copyWith(requestError: RequestError.unknown));
+      if (response == null) {
+        // возращение типа ошибки
+        emit(state.copyWith(authenticated: true));
+      } else {
+        switch (response) {
+          case LoginError.emailNotExist:
+            emit(state.copyWith(emailError: EmailError.notExist));
+            break;
+          case LoginError.wrongPassword:
+            emit(state.copyWith(passwordError: PasswordError.wrongPassword));
+            break;
+          case LoginError.other:
+            emit(state.copyWith(requestError: RequestError.unknown));
+            break;
+        }
+      }
     }
   }
 
@@ -112,18 +112,18 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
   // для вывод всех евентов в консоль
   // удобно при дебаге
-  @override
-  void onEvent(LoginEvent event) {
-    debugPrint('Login Bloc. Event happened: $event');
-    super.onEvent(event);
-  }
-
-  // метод, который позволяет какие транзишены есть
-  @override
-  void onTransition(Transition<LoginEvent, LoginState> transition) {
-    debugPrint('Login Bloc. Transition happened: $transition');
-    super.onTransition(transition);
-  }
+//   @override
+//   void onEvent(LoginEvent event) {
+//     debugPrint('Login Bloc. Event happened: $event');
+//     super.onEvent(event);
+//   }
+//
+//   // метод, который позволяет какие транзишены есть
+//   @override
+//   void onTransition(Transition<LoginEvent, LoginState> transition) {
+//     debugPrint('Login Bloc. Transition happened: $transition');
+//     super.onTransition(transition);
+//   }
 }
 
 // для обработки ошибок
