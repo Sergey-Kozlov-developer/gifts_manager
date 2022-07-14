@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
+import 'package:gifts_manager/data/model/request_error.dart';
 import 'package:gifts_manager/presentation/login/model/models.dart';
 
 part 'login_event.dart';
@@ -17,6 +18,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     // валидации и проверки почты и пароля
     on<LoginEmailChanged>(_emailChanged);
     on<LoginPasswordChanged>(_passwordChanged);
+    on<LoginRequestErrorShowed>(_requestErrorShow);
   }
 
   FutureOr<void> _loginButtonClicked(
@@ -29,22 +31,23 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       // имитируемый ответ от сервера response
       final response =
           await _login(email: state.email, password: state.password);
-      if (response == null) {
-        // возращение типа ошибки
-        emit(state.copyWith(authenticated: true));
-      } else {
-        switch (response) {
-          case LoginError.emailNotExist:
-            emit(state.copyWith(emailError: EmailError.notExist));
-            break;
-          case LoginError.wrongPassword:
-            emit(state.copyWith(passwordError: PasswordError.wrongPassword));
-            break;
-          // case LoginError.other:
-          //   emit(state.copyWith(o:  EmailError.notExist));
-          //   break;
-        }
-      }
+      emit(state.copyWith(requestError: RequestError.unknown));
+      // if (response == null) {
+      //   // возращение типа ошибки
+      //   emit(state.copyWith(authenticated: true));
+      // } else {
+      //   switch (response) {
+      //     case LoginError.emailNotExist:
+      //       emit(state.copyWith(emailError: EmailError.notExist));
+      //       break;
+      //     case LoginError.wrongPassword:
+      //       emit(state.copyWith(passwordError: PasswordError.wrongPassword));
+      //       break;
+      //     case LoginError.other:
+      //       emit(state.copyWith(requestError: RequestError.unknown));
+      //       break;
+      //   }
+      // }
     }
   }
 
@@ -95,6 +98,16 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     );
   }
 
+  // сброс всех прочих ошибок other
+  FutureOr<void> _requestErrorShow(
+    LoginRequestErrorShowed event,
+    Emitter<LoginState> emit,
+  ) {
+    emit(
+      state.copyWith(requestError: RequestError.noError),
+    );
+  }
+
   /*=== Для дебага===*/
 
   // для вывод всех евентов в консоль
@@ -114,4 +127,4 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 }
 
 // для обработки ошибок
-enum LoginError { emailNotExist, wrongPassword }
+enum LoginError { emailNotExist, wrongPassword, other }

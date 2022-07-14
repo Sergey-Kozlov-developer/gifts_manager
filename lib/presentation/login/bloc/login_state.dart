@@ -8,6 +8,7 @@ class LoginState extends Equatable {
   final bool emailValid;
   final bool passwordValid;
   final bool authenticated;
+  final RequestError requestError;
 
   const LoginState({
     required this.email,
@@ -17,6 +18,7 @@ class LoginState extends Equatable {
     required this.emailValid,
     required this.passwordValid,
     required this.authenticated,
+    required this.requestError,
   });
 
   // метод для валидации почты и пароля
@@ -31,6 +33,7 @@ class LoginState extends Equatable {
         emailValid: false,
         passwordValid: false,
         authenticated: false,
+        requestError: RequestError.noError,
       );
 
   // метод имутирует состояние пересоздавая с нуля
@@ -42,6 +45,7 @@ class LoginState extends Equatable {
     final bool? emailValid,
     final bool? passwordValid,
     final bool? authenticated,
+    final RequestError? requestError,
   }) {
     // возвращаем новый объект, в котором все поля остаются прежними
     // но при этом заменяются на новые
@@ -53,6 +57,7 @@ class LoginState extends Equatable {
       emailValid: emailValid ?? this.emailValid,
       passwordValid: passwordValid ?? this.passwordValid,
       authenticated: authenticated ?? this.authenticated,
+      requestError: requestError ?? this.requestError,
     );
   }
 
@@ -66,5 +71,6 @@ class LoginState extends Equatable {
         emailValid,
         passwordValid,
         authenticated,
+        requestError
       ];
 }

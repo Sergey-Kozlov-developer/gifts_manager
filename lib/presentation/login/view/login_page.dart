@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:gifts_manager/data/model/request_error.dart';
 import 'package:gifts_manager/presentation/home/view/home_page.dart';
 import 'package:gifts_manager/presentation/login/bloc/login_bloc.dart';
 import 'package:gifts_manager/presentation/login/model/email_error.dart';
@@ -49,16 +50,36 @@ class _LoginPageWidgetState extends State<_LoginPageWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // BlocListener<LoginBloc, LoginState> появление инфы что мы авторизованы
-    return BlocListener<LoginBloc, LoginState>(
-      listener: (context, state) {
-        if (state.authenticated) {
-          // если прошли авториз, переходим в HomePage
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const HomePage()),
-          );
-        }
-      },
+    // MultiBlocListener оборачивает несколько BlocListener в list
+    return MultiBlocListener(
+      listeners: [
+        // BlocListener<LoginBloc, LoginState> появление инфы что мы авторизованы
+        BlocListener<LoginBloc, LoginState>(
+          listener: (context, state) {
+            if (state.authenticated) {
+              // если прошли авториз, переходим в HomePage
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const HomePage()),
+              );
+            }
+          },
+        ),
+        // тут обработчик всех прочих ошибок
+        BlocListener<LoginBloc, LoginState>(
+          listener: (context, state) {
+            if (state.requestError != RequestError.noError) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(
+                  'ПРОИЗОШЛА ОШИБКА',
+                  style: TextStyle(color: Colors.white),
+                ),
+                backgroundColor: Colors.red[900],
+              ));
+              context.read<LoginBloc>().add(const LoginRequestErrorShowed());
+            }
+          },
+        ),
+      ],
       child: Column(
         children: [
           const SizedBox(height: 64),

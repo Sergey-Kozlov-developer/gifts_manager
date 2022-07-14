@@ -32,3 +32,11 @@ class LoginLoginButtonClicked extends LoginEvent {
   @override
   List<Object?> get props => [];
 }
+
+// Event обнубления ошибки в Snackbar при появлении всех прочих ошибок other
+class LoginRequestErrorShowed extends LoginEvent {
+  const LoginRequestErrorShowed();
+
+  @override
+  List<Object?> get props => [];
+}
