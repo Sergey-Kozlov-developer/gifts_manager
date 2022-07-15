@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
       // lightTheme and darkTheme наши созданные темы
       theme: lightTheme,
       darkTheme: darkTheme,
-      themeMode: ThemeMode.light,
+      themeMode: ThemeMode.dark,
       home: const LoginPage(),
     );
   }
