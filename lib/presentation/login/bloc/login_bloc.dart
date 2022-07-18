@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:bloc/bloc.dart';
+import 'package:email_validator/email_validator.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:gifts_manager/data/model/request_error.dart';
@@ -12,12 +13,17 @@ part 'login_event.dart';
 part 'login_state.dart';
 
 class LoginBloc extends Bloc<LoginEvent, LoginState> {
+  // regularExp password
+  final passwordRegexp =
+      RegExp(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$');
+
   LoginBloc() : super(LoginState.initial()) {
     // при нажатии кнопки Войти переходим на экран Home
     on<LoginLoginButtonClicked>(_loginButtonClicked);
     // валидации и проверки почты и пароля
     on<LoginEmailChanged>(_emailChanged);
     on<LoginPasswordChanged>(_passwordChanged);
+    // окно показа ошибки
     on<LoginRequestErrorShowed>(_requestErrorShow);
   }
 
@@ -70,7 +76,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     Emitter<LoginState> emit,
   ) {
     final newEmail = event.email; // эвент смен email
-    final emailValid = newEmail.length > 4;
+    final emailValid = _emailValid(newEmail);
     emit(
       state.copyWith(
         email: newEmail,
@@ -81,13 +87,18 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     );
   }
 
+  // валидация email EmailValidator
+  bool _emailValid(final String email) {
+    return EmailValidator.validate(email);
+  }
+
   // валидация password
   FutureOr<void> _passwordChanged(
     LoginPasswordChanged event,
     Emitter<LoginState> emit,
   ) {
     final newPassword = event.password; // эвент смен password
-    final passwordValid = newPassword.length >= 8;
+    final passwordValid = _passwordValid(newPassword);
     emit(
       state.copyWith(
         password: newPassword,
@@ -96,6 +107,11 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         authenticated: false,
       ),
     );
+  }
+
+  // валидация regularExp
+  bool _passwordValid(final String password) {
+    return passwordRegexp.hasMatch(password);
   }
 
   // сброс всех прочих ошибок other
@@ -108,10 +124,10 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     );
   }
 
-  /*=== Для дебага===*/
+/*=== Для дебага===*/
 
-  // для вывод всех евентов в консоль
-  // удобно при дебаге
+// для вывод всех евентов в консоль
+// удобно при дебаге
 //   @override
 //   void onEvent(LoginEvent event) {
 //     debugPrint('Login Bloc. Event happened: $event');
