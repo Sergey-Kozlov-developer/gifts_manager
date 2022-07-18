@@ -84,7 +84,7 @@ class _LoginPageWidgetState extends State<_LoginPageWidget> {
       ],
       child: Column(
         children: [
-          const SizedBox(height: 64),
+          const SizedBox(height: 46),
           Center(
               child: Text(
             "Вход",
@@ -194,9 +194,10 @@ class _EmailTextField extends StatelessWidget {
                 context.read<LoginBloc>().add(LoginEmailChanged(text)),
             // нажимаем на ОК после ввода email переходим на поле Пароль
             onSubmitted: (_) => _passwordFocusNode.requestFocus(),
-
+            autocorrect: false,
+            keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
-              hintText: 'Почта',
+              labelText: 'Почта',
               // вывод текста ошибки если неверно введена почта
               errorText: emailError == EmailError.noError
                   ? null
@@ -229,13 +230,16 @@ class _PasswordTextField extends StatelessWidget {
           return TextField(
             // изменение фокуса поля ввода
             focusNode: _passwordFocusNode,
+            autocorrect: false,
+            keyboardType: TextInputType.visiblePassword,
+            obscureText: true,
             // логика ввода пароля
             onChanged: (text) =>
                 context.read<LoginBloc>().add(LoginPasswordChanged(text)),
             onSubmitted: (_) =>
                 context.read<LoginBloc>().add(const LoginLoginButtonClicked()),
             decoration: InputDecoration(
-              hintText: 'Пароль',
+              labelText: 'Пароль',
               // вывод текста ошибки если неверно введен пароль
               errorText: passwordError == PasswordError.noError
                   ? null
