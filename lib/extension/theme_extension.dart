@@ -21,20 +21,17 @@ extension ThemeStylesExtension on ThemeData {
 }
 
 extension BrightnessDependanttextStyle on TextStyle {
-
   TextStyle dynamicColor({
-  required final BuildContext context,
-  required final Color lightThemeColor,
-  required final Color darkThemeColor,
-}) {
-  final brightness = MediaQuery.of(context).platformBrightness;
-  switch (brightness) {
-
-    case Brightness.dark:
-      return copyWith(color: darkThemeColor);
-    case Brightness.light:
-      return copyWith(color: lightThemeColor);
+    required final BuildContext context,
+    required final Color lightThemeColor,
+    required final Color darkThemeColor,
+  }) {
+    final brightness = MediaQuery.of(context).platformBrightness;
+    switch (brightness) {
+      case Brightness.dark:
+        return copyWith(color: darkThemeColor);
+      case Brightness.light:
+        return copyWith(color: lightThemeColor);
+    }
   }
-}
-
 }
