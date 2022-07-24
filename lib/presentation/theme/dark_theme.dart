@@ -6,6 +6,7 @@ final _base = ThemeData.dark();
 
 final darkTheme = _base.copyWith(
   backgroundColor: AppColors.darkBlack100,
+  scaffoldBackgroundColor: AppColors.darkBlack100,
   textTheme: _base.textTheme.copyWith(
     headline1: const TextStyle(
       fontSize: 32,
@@ -56,15 +57,15 @@ final darkTheme = _base.copyWith(
       textStyle: MaterialStateProperty.resolveWith((states) {
         return states.contains(MaterialState.disabled)
             ? const TextStyle(
-          color: AppColors.darkWhite60,
-          fontWeight: FontWeight.bold,
-          fontSize: 14,
-        )
+                color: AppColors.darkWhite60,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              )
             : const TextStyle(
-          color: AppColors.darkWhite100,
-          fontWeight: FontWeight.bold,
-          fontSize: 14,
-        );
+                color: AppColors.darkWhite100,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              );
       }),
       backgroundColor: MaterialStateProperty.resolveWith((states) {
         if (states.contains(MaterialState.disabled)) {
@@ -93,7 +94,7 @@ final darkTheme = _base.copyWith(
             : AppColors.darkDarkBlue100;
       }),
       backgroundColor: MaterialStateProperty.resolveWith(
-            (states) => Colors.transparent,
+        (states) => Colors.transparent,
       ),
       overlayColor: MaterialStateProperty.all(
         AppColors.lightLightBlue100,
@@ -134,5 +135,10 @@ final darkTheme = _base.copyWith(
   textSelectionTheme: _base.textSelectionTheme.copyWith(
     cursorColor: AppColors.darkDarkBlue100,
     selectionHandleColor: AppColors.lightLightBlue100,
+  ),
+  appBarTheme: const AppBarTheme(
+    elevation: 0,
+    backgroundColor: AppColors.darkBlack100,
+    foregroundColor: AppColors.darkDarkBlue100,
   ),
 );
