@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gifts_manager/extension/theme_extension.dart';
@@ -31,6 +32,62 @@ class _RegistrationPageWidget extends StatefulWidget {
 }
 
 class _RegistrationPageWidgetState extends State<_RegistrationPageWidget> {
+  // переменные. после ввода пояты и нажатия ОК, переход к след полю ввода(пароль)
+  late final FocusNode _emailFocusNode;
+  late final FocusNode _passwordFocusNode;
+  late final FocusNode _passwordConfirmationFocusNode;
+  late final FocusNode _nameFocusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailFocusNode = FocusNode();
+    _passwordFocusNode = FocusNode();
+    _passwordConfirmationFocusNode = FocusNode();
+    _nameFocusNode = FocusNode();
+    SchedulerBinding.instance
+        .addPersistentFrameCallback((_) => _addFocusLostHandlers());
+  }
+
+  void _addFocusLostHandlers() {
+    // _emailFocusNode оповещаем bloc, что поменяли фокус
+    _emailFocusNode.addListener(() {
+      if (_emailFocusNode.hasFocus) {
+        context
+            .read<RegistrationBloc>()
+            .add(const RegistrationEmailFocusLost());
+      }
+    });
+    _passwordFocusNode.addListener(() {
+      if (_passwordFocusNode.hasFocus) {
+        context
+            .read<RegistrationBloc>()
+            .add(const RegistrationPasswordFocusLost());
+      }
+    });
+    _passwordConfirmationFocusNode.addListener(() {
+      if (_passwordConfirmationFocusNode.hasFocus) {
+        context
+            .read<RegistrationBloc>()
+            .add(const RegistrationPasswordConfirmationFocusLost());
+      }
+    });
+    _nameFocusNode.addListener(() {
+      if (_nameFocusNode.hasFocus) {
+        context.read<RegistrationBloc>().add(const RegistrationNameFocusLost());
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
+    _passwordConfirmationFocusNode.dispose();
+    _nameFocusNode.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -41,13 +98,216 @@ class _RegistrationPageWidgetState extends State<_RegistrationPageWidget> {
             Expanded(
               child: ListView(
                 children: [
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text('Создать аккаунт', style: context.theme.h2),
+                  ),
+                  const SizedBox(height: 24),
+                  _EmailTextField(
+                    emailFocusNode: _emailFocusNode,
+                    passwordFocusNode: _passwordFocusNode,
+                  ),
+                  _PasswordTextField(
+                    passwordFocusNode: _passwordFocusNode,
+                    passwordConfirmationFocusNode: _passwordConfirmationFocusNode,
+                  ),
+                  _PasswordConfirmationTextField(
+                    passwordConfirmationFocusNode: _passwordConfirmationFocusNode,
+                    nameFocusNode: _nameFocusNode,
+                  ),
+                  _NameTextField(
+                    nameFocusNode: _nameFocusNode,
+                  ),
+                  const SizedBox(height: 16),
                   const _AvatarWidget(),
                 ],
               ),
             ),
-            _RegisterButton(),
+            const _RegisterButton(),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _EmailTextField extends StatelessWidget {
+  const _EmailTextField({
+    Key? key,
+    required FocusNode emailFocusNode,
+    required FocusNode passwordFocusNode,
+  })  : _emailFocusNode = emailFocusNode,
+        _passwordFocusNode = passwordFocusNode,
+        super(key: key);
+
+  final FocusNode _emailFocusNode;
+  final FocusNode _passwordFocusNode;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      // подписка на ошибку ввода почты с помощью BlocSelector
+      child: BlocBuilder<RegistrationBloc, RegistrationState>(
+        buildWhen: (_, current) => current is RegistrationFieldsInfo,
+        builder: (context, state) {
+          final fieldsInfo = state as RegistrationFieldsInfo;
+          final error = fieldsInfo.emailError;
+          return TextField(
+            // изменение фокуса поля ввода
+            focusNode: _emailFocusNode,
+            // логика ввода email
+            onChanged: (text) => context
+                .read<RegistrationBloc>()
+                .add(RegistrationEmailChange(text)),
+            // нажимаем на ОК после ввода email переходим на поле Пароль
+            onSubmitted: (_) => _passwordFocusNode.requestFocus(),
+            autocorrect: false,
+            keyboardType: TextInputType.emailAddress,
+            decoration: InputDecoration(
+              labelText: 'Почта',
+              // вывод текста ошибки если неверно введена почта
+              errorText: error?.toString(),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _PasswordTextField extends StatelessWidget {
+  const _PasswordTextField({
+    Key? key,
+    required FocusNode passwordFocusNode,
+    required FocusNode passwordConfirmationFocusNode,
+  })  : _passwordFocusNode = passwordFocusNode,
+        _passwordConfirmationFocusNode = passwordConfirmationFocusNode,
+        super(key: key);
+
+  final FocusNode _passwordFocusNode;
+  final FocusNode _passwordConfirmationFocusNode;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      // подписка на ошибку ввода почты с помощью BlocSelector
+      child: BlocBuilder<RegistrationBloc, RegistrationState>(
+        buildWhen: (_, current) => current is RegistrationFieldsInfo,
+        builder: (context, state) {
+          final fieldsInfo = state as RegistrationFieldsInfo;
+          final error = fieldsInfo.passwordError;
+          return TextField(
+            // изменение фокуса поля ввода
+            focusNode: _passwordFocusNode,
+            // логика ввода email
+            onChanged: (text) => context
+                .read<RegistrationBloc>()
+                .add(RegistrationPasswordChange(text)),
+            // нажимаем на ОК после ввода email переходим на поле Пароль
+            onSubmitted: (_) => _passwordConfirmationFocusNode.requestFocus(),
+            autocorrect: false,
+            obscureText: true,
+            keyboardType: TextInputType.visiblePassword,
+            decoration: InputDecoration(
+              labelText: 'Пароль',
+              // вывод текста ошибки если неверно введена почта
+              errorText: error?.toString(),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _PasswordConfirmationTextField extends StatelessWidget {
+  const _PasswordConfirmationTextField({
+    Key? key,
+    required FocusNode passwordConfirmationFocusNode,
+    required FocusNode nameFocusNode,
+  })  :
+        _passwordConfirmationFocusNode = passwordConfirmationFocusNode,
+        _nameFocusNode = nameFocusNode,
+        super(key: key);
+
+  final FocusNode _passwordConfirmationFocusNode;
+  final FocusNode _nameFocusNode;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      // подписка на ошибку ввода почты с помощью BlocSelector
+      child: BlocBuilder<RegistrationBloc, RegistrationState>(
+        buildWhen: (_, current) => current is RegistrationFieldsInfo,
+        builder: (context, state) {
+          final fieldsInfo = state as RegistrationFieldsInfo;
+          final error = fieldsInfo.passwordConfirmationError;
+          return TextField(
+            // изменение фокуса поля ввода
+            focusNode: _passwordConfirmationFocusNode,
+            // логика ввода email
+            onChanged: (text) => context
+                .read<RegistrationBloc>()
+                .add(RegistrationPasswordConfirmationChange(text)),
+            // нажимаем на ОК после ввода email переходим на поле Пароль
+            onSubmitted: (_) => _nameFocusNode.requestFocus(),
+            autocorrect: false,
+            obscureText: true,
+            keyboardType: TextInputType.visiblePassword,
+            decoration: InputDecoration(
+              labelText: 'Пароль второй раз',
+              // вывод текста ошибки если неверно введена почта
+              errorText: error?.toString(),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _NameTextField extends StatelessWidget {
+  const _NameTextField({
+    Key? key,
+    required FocusNode nameFocusNode,
+  })  :
+        _nameFocusNode = nameFocusNode,
+        super(key: key);
+
+  final FocusNode _nameFocusNode;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      // подписка на ошибку ввода почты с помощью BlocSelector
+      child: BlocBuilder<RegistrationBloc, RegistrationState>(
+        buildWhen: (_, current) => current is RegistrationFieldsInfo,
+        builder: (context, state) {
+          final fieldsInfo = state as RegistrationFieldsInfo;
+          final error = fieldsInfo.nameError;
+          return TextField(
+            // изменение фокуса поля ввода
+            focusNode: _nameFocusNode,
+            // логика ввода email
+            onChanged: (text) => context
+                .read<RegistrationBloc>()
+                .add(RegistrationNameChange(text)),
+            // нажимаем на ОК после ввода email переходим на поле Пароль
+            onSubmitted: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+            autocorrect: false,
+            keyboardType: TextInputType.name,
+            decoration: InputDecoration(
+              labelText: 'Имя и фамилия',
+              // вывод текста ошибки если неверно введена почта
+              errorText: error?.toString(),
+            ),
+          );
+        },
       ),
     );
   }

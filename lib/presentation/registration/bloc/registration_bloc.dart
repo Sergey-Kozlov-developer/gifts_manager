@@ -32,6 +32,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
         )) {
     on<RegistrationChangeAvatar>(_onChangeAvatar);
     on<RegistrationEmailChange>(_onEmailChanged);
+    on<RegistrationEmailFocusLost>(_onEmailFocusLost);
   }
 
   FutureOr<void> _onChangeAvatar(
@@ -41,6 +42,8 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     _avatarKey = Random().nextInt(1000000).toString();
     emit(_calculateFieldsInfo());
   }
+
+
 
   FutureOr<void> _onEmailChanged(
     final RegistrationEmailChange event,
@@ -54,11 +57,19 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     emit(_calculateFieldsInfo());
   }
 
+  FutureOr<void> _onEmailFocusLost(
+      final RegistrationEmailFocusLost event,
+      final Emitter<RegistrationState> emit,
+      ) {
+    _highlightEmailError = true;
+    emit(_calculateFieldsInfo());
+  }
+
   // метод для сбора инфы с полей будет выдавать инфу об всех ошибках
   RegistrationFieldsInfo _calculateFieldsInfo() {
     return RegistrationFieldsInfo(
       avatarLink: _avatarBuilder(_avatarKey),
-      emailError: _emailError,
+      emailError: _highlightEmailError ? _emailError : null,
     );
   }
 
