@@ -33,12 +33,21 @@ class _RegistrationPageWidget extends StatefulWidget {
 class _RegistrationPageWidgetState extends State<_RegistrationPageWidget> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(),
-      body: Column(
-        children: [
-          const _AvatarWidget(),
-        ],
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(),
+        body: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                children: [
+                  const _AvatarWidget(),
+                ],
+              ),
+            ),
+            _RegisterButton(),
+          ],
+        ),
       ),
     );
   }
@@ -91,6 +100,40 @@ class _AvatarWidget extends StatelessWidget {
             child: const Text('Изменить'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RegisterButton extends StatelessWidget {
+  const _RegisterButton({
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: SizedBox(
+        width: double.infinity,
+        // 1) в BlocSelector проверяем на валидность, если все верно
+        // то при нажатии на кнопку Войти переходим на дом. экран
+        // 2) пока не веедена почта с паролем, то кнопка неактивна
+        child: BlocSelector<RegistrationBloc, RegistrationState, bool>(
+          selector: (state) => state is RegistrationInProgress,
+          builder: (context, inProgress) {
+            return ElevatedButton(
+              // 1) передаем в bloc инфу о нажатии на кнопку
+              // 2) read передает инфу в блок без подписки на изменение
+              onPressed: inProgress
+                  ? null
+                  : () => context
+                      .read<RegistrationBloc>()
+                      .add(const RegistrationCreateAccount()),
+              child: Text('Создать'),
+            );
+          },
+        ),
       ),
     );
   }
