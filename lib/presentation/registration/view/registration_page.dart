@@ -3,6 +3,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gifts_manager/extension/theme_extension.dart';
+import 'package:gifts_manager/presentation/home/view/home_page.dart';
 import 'package:gifts_manager/presentation/registration/bloc/registration_bloc.dart';
 import 'package:gifts_manager/presentation/theme/build_context.dart';
 import 'package:gifts_manager/resources/app_colors.dart';
@@ -90,42 +91,55 @@ class _RegistrationPageWidgetState extends State<_RegistrationPageWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(),
-        body: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                children: [
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text('Создать аккаунт', style: context.theme.h2),
-                  ),
-                  const SizedBox(height: 24),
-                  _EmailTextField(
-                    emailFocusNode: _emailFocusNode,
-                    passwordFocusNode: _passwordFocusNode,
-                  ),
-                  _PasswordTextField(
-                    passwordFocusNode: _passwordFocusNode,
-                    passwordConfirmationFocusNode: _passwordConfirmationFocusNode,
-                  ),
-                  _PasswordConfirmationTextField(
-                    passwordConfirmationFocusNode: _passwordConfirmationFocusNode,
-                    nameFocusNode: _nameFocusNode,
-                  ),
-                  _NameTextField(
-                    nameFocusNode: _nameFocusNode,
-                  ),
-                  const SizedBox(height: 16),
-                  const _AvatarWidget(),
-                ],
+    return BlocListener<RegistrationBloc, RegistrationState>(
+      listener: (context, state) {
+        if (state is RegistrationCompleted) {
+          // если прошли регистрацию, переходим в HomePage
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const HomePage()),
+            (route) => false,
+          );
+        }
+      },
+      child: SafeArea(
+        child: Scaffold(
+          appBar: AppBar(),
+          body: Column(
+            children: [
+              Expanded(
+                child: ListView(
+                  children: [
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text('Создать аккаунт', style: context.theme.h2),
+                    ),
+                    const SizedBox(height: 24),
+                    _EmailTextField(
+                      emailFocusNode: _emailFocusNode,
+                      passwordFocusNode: _passwordFocusNode,
+                    ),
+                    _PasswordTextField(
+                      passwordFocusNode: _passwordFocusNode,
+                      passwordConfirmationFocusNode:
+                          _passwordConfirmationFocusNode,
+                    ),
+                    _PasswordConfirmationTextField(
+                      passwordConfirmationFocusNode:
+                          _passwordConfirmationFocusNode,
+                      nameFocusNode: _nameFocusNode,
+                    ),
+                    _NameTextField(
+                      nameFocusNode: _nameFocusNode,
+                    ),
+                    const SizedBox(height: 16),
+                    const _AvatarWidget(),
+                  ],
+                ),
               ),
-            ),
-            const _RegisterButton(),
-          ],
+              const _RegisterButton(),
+            ],
+          ),
         ),
       ),
     );
@@ -228,8 +242,7 @@ class _PasswordConfirmationTextField extends StatelessWidget {
     Key? key,
     required FocusNode passwordConfirmationFocusNode,
     required FocusNode nameFocusNode,
-  })  :
-        _passwordConfirmationFocusNode = passwordConfirmationFocusNode,
+  })  : _passwordConfirmationFocusNode = passwordConfirmationFocusNode,
         _nameFocusNode = nameFocusNode,
         super(key: key);
 
@@ -274,8 +287,7 @@ class _NameTextField extends StatelessWidget {
   const _NameTextField({
     Key? key,
     required FocusNode nameFocusNode,
-  })  :
-        _nameFocusNode = nameFocusNode,
+  })  : _nameFocusNode = nameFocusNode,
         super(key: key);
 
   final FocusNode _nameFocusNode;

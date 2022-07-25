@@ -47,3 +47,10 @@ class RegistrationInProgress extends RegistrationState {
   // TODO: implement props
   List<Object?> get props => [];
 }
+// state перехода на след страницу после регистрации и нажатии СОЗДАТЬ
+class RegistrationCompleted extends RegistrationState {
+  const RegistrationCompleted();
+  @override
+  // TODO: implement props
+  List<Object?> get props => [];
+}

@@ -5,6 +5,7 @@ import 'package:bloc/bloc.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:equatable/equatable.dart';
 import 'package:gifts_manager/data/model/request_error.dart';
+import 'package:gifts_manager/data/storage/shared_preferences_data.dart';
 import 'package:gifts_manager/presentation/registration/model/errors.dart';
 
 part 'registration_event.dart';
@@ -153,12 +154,29 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
   FutureOr<void> _onCreateAccount(
     final RegistrationCreateAccount event,
     final Emitter<RegistrationState> emit,
-  ) {
+  ) async {
     _highlightEmailError = true;
     _highlightPasswordError = true;
     _highlightPasswordConfirmationError = true;
     _highlightNameError = true;
     emit(_calculateFieldsInfo());
+    // если есть ошибки, блокируем переход на след страницу по кнопке СОЗДАТЬ
+    final haveError = _emailError != null ||
+    _passwordError != null ||
+    _passwordConfirmationError != null ||
+    _nameError != null;
+    if (haveError) {
+      return;
+    }
+    emit(const RegistrationInProgress());
+    final token = await _register();
+    SharedPreferenceData.getInstance().setToken(token);
+    emit(const RegistrationCompleted());
+  }
+  // имитируем поход в сеть при регистрации для возвращения токена авторизации
+  Future<String> _register() async {
+    await Future.delayed(const Duration(seconds: 2));
+    return 'token';
   }
 
   // метод для сбора инфы с полей будет выдавать инфу об всех ошибках
