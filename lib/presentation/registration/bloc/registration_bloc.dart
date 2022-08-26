@@ -2,11 +2,14 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:bloc/bloc.dart';
+import 'package:dio/dio.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:gifts_manager/data/model/request_error.dart';
 import 'package:gifts_manager/data/storage/shared_preferences_data.dart';
 import 'package:gifts_manager/presentation/registration/model/errors.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
 part 'registration_event.dart';
 
@@ -52,7 +55,8 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     on<RegistrationPasswordChange>(_onPasswordChanged);
     on<RegistrationPasswordFocusLost>(_onPasswordFocusLost);
     on<RegistrationPasswordConfirmationChange>(_onPasswordConfirmationChanged);
-    on<RegistrationPasswordConfirmationFocusLost>(_onPasswordConfirmationFocusLost);
+    on<RegistrationPasswordConfirmationFocusLost>(
+        _onPasswordConfirmationFocusLost);
     on<RegistrationNameChange>(_onNameChanged);
     on<RegistrationNameFocusLost>(_onNameFocusLost);
     on<RegistrationCreateAccount>(_onCreateAccount);
@@ -85,11 +89,12 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     _highlightEmailError = true;
     emit(_calculateFieldsInfo());
   }
+
   // метод ввода пароля
   FutureOr<void> _onPasswordChanged(
-      final RegistrationPasswordChange event,
-      final Emitter<RegistrationState> emit,
-      ) {
+    final RegistrationPasswordChange event,
+    final Emitter<RegistrationState> emit,
+  ) {
     // обновление текущего знач password
     _password = event.password;
     // обновление  _passwordError
@@ -99,20 +104,21 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     // эмитим есть ли ошибка или нет. обновляем инфу с филдами
     emit(_calculateFieldsInfo());
   }
+
   // потеря фокуса пароля
   FutureOr<void> _onPasswordFocusLost(
-      final RegistrationPasswordFocusLost event,
-      final Emitter<RegistrationState> emit,
-      ) {
+    final RegistrationPasswordFocusLost event,
+    final Emitter<RegistrationState> emit,
+  ) {
     _highlightPasswordError = true;
     emit(_calculateFieldsInfo());
   }
 
   // метод ввода повторно пароля
   FutureOr<void> _onPasswordConfirmationChanged(
-      final RegistrationPasswordConfirmationChange event,
-      final Emitter<RegistrationState> emit,
-      ) {
+    final RegistrationPasswordConfirmationChange event,
+    final Emitter<RegistrationState> emit,
+  ) {
     // обновление текущего знач password
     _passwordConfirmation = event.passwordConfirmation;
     // обновление  _passwordErrorConfirmation
@@ -120,20 +126,21 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     // эмитим есть ли ошибка или нет. обновляем инфу с филдами
     emit(_calculateFieldsInfo());
   }
+
   // потеря фокуса поля повторного ввода пароля
   FutureOr<void> _onPasswordConfirmationFocusLost(
-      final RegistrationPasswordConfirmationFocusLost event,
-      final Emitter<RegistrationState> emit,
-      ) {
+    final RegistrationPasswordConfirmationFocusLost event,
+    final Emitter<RegistrationState> emit,
+  ) {
     _highlightPasswordConfirmationError = true;
     emit(_calculateFieldsInfo());
   }
 
   // метод ввода имени
   FutureOr<void> _onNameChanged(
-      final RegistrationNameChange event,
-      final Emitter<RegistrationState> emit,
-      ) {
+    final RegistrationNameChange event,
+    final Emitter<RegistrationState> emit,
+  ) {
     // обновление текущего знач имени
     _name = event.name;
     // обновление
@@ -141,11 +148,12 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     // эмитим есть ли ошибка или нет. обновляем инфу с филдами
     emit(_calculateFieldsInfo());
   }
+
   // потеря фокуса имени
   FutureOr<void> _onNameFocusLost(
-      final RegistrationNameFocusLost event,
-      final Emitter<RegistrationState> emit,
-      ) {
+    final RegistrationNameFocusLost event,
+    final Emitter<RegistrationState> emit,
+  ) {
     _highlightNameError = true;
     emit(_calculateFieldsInfo());
   }
@@ -162,9 +170,9 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     emit(_calculateFieldsInfo());
     // если есть ошибки, блокируем переход на след страницу по кнопке СОЗДАТЬ
     final haveError = _emailError != null ||
-    _passwordError != null ||
-    _passwordConfirmationError != null ||
-    _nameError != null;
+        _passwordError != null ||
+        _passwordConfirmationError != null ||
+        _nameError != null;
     if (haveError) {
       return;
     }
@@ -173,9 +181,32 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     SharedPreferenceData.getInstance().setToken(token);
     emit(const RegistrationCompleted());
   }
-  // имитируем поход в сеть при регистрации для возвращения токена авторизации
+
+  // реализуем запрос в сеть в сеть при регистрации для возвращения токена авторизации
   Future<String> _register() async {
-    await Future.delayed(const Duration(seconds: 2));
+    final dio = Dio();
+    if (kDebugMode) {
+      dio.interceptors.add(
+        PrettyDioLogger(
+          request: true,
+          requestHeader: true,
+          requestBody: true,
+          responseHeader: true,
+          responseBody: true,
+          error: true,
+        ),
+      );
+    }
+    try {
+      final response = await dio.post(
+          'https://giftmanager.skill-branch.ru/api/auth/create',
+          data: '''{
+    "email": $_email,
+    "name": $_name, 
+    "password": $_password, 
+    "avatarUrl": ${_avatarBuilder(_avatarKey)}"
+}''');
+    } catch (e) {}
     return 'token';
   }
 
@@ -216,6 +247,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     }
     return null;
   }
+
   // метод по ошибкам повторного ввода password
   RegistarationPasswordConfirmationError? _validatePasswordConfirmation() {
     if (_passwordConfirmation.isEmpty) {
@@ -226,6 +258,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     }
     return null;
   }
+
   // метод по ошибкам name
   RegistarationNameError? _validateName() {
     if (_name.isEmpty) {
