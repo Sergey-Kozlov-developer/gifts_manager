@@ -6,6 +6,8 @@ import 'package:dio/dio.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
+import 'package:gifts_manager/data/http/model/create_account_request_dto.dart';
+import 'package:gifts_manager/data/http/model/user_with_tokens_dto.dart';
 import 'package:gifts_manager/data/model/request_error.dart';
 import 'package:gifts_manager/data/storage/shared_preferences_data.dart';
 import 'package:gifts_manager/presentation/registration/model/errors.dart';
@@ -184,7 +186,9 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
 
   // реализуем запрос в сеть в сеть при регистрации для возвращения токена авторизации
   Future<String> _register() async {
-    final dio = Dio();
+    final dio = Dio(
+      BaseOptions(baseUrl: 'https://giftmanager.skill-branch.ru/api'),
+    );
     if (kDebugMode) {
       dio.interceptors.add(
         PrettyDioLogger(
@@ -197,15 +201,19 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
         ),
       );
     }
+    final requestBody = CreateAccountRequestDto(
+      email: _email,
+      password: _password,
+      name: _name,
+      avatarUrl: _avatarBuilder(_avatarKey),
+    );
     try {
       final response = await dio.post(
-          'https://giftmanager.skill-branch.ru/api/auth/create',
-          data: '''{
-    "email": $_email,
-    "name": $_name, 
-    "password": $_password, 
-    "avatarUrl": ${_avatarBuilder(_avatarKey)}"
-}''');
+        '/auth/create',
+        data: requestBody.toJson(),
+      );
+      final userWithTokens = UserWithTokensDto.fromJson(response.data);
+      return userWithTokens.token;
     } catch (e) {}
     return 'token';
   }
