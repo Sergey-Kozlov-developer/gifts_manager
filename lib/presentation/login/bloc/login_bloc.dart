@@ -5,7 +5,12 @@ import 'package:bloc/bloc.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
+import 'package:gifts_manager/data/http/model/user_with_tokens_dto.dart';
+import 'package:gifts_manager/data/http/unauthorized_api_service.dart';
 import 'package:gifts_manager/data/model/request_error.dart';
+import 'package:gifts_manager/data/repository/refresh_token_repository.dart';
+import 'package:gifts_manager/data/repository/token_repository.dart';
+import 'package:gifts_manager/data/repository/user_repository.dart';
 import 'package:gifts_manager/presentation/login/model/models.dart';
 
 part 'login_event.dart';
@@ -13,10 +18,6 @@ part 'login_event.dart';
 part 'login_state.dart';
 
 class LoginBloc extends Bloc<LoginEvent, LoginState> {
-  // regularExp password
-  final passwordRegexp =
-      RegExp(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$');
-
   LoginBloc() : super(LoginState.initial()) {
     // при нажатии кнопки Войти переходим на экран Home
     on<LoginLoginButtonClicked>(_loginButtonClicked);
@@ -34,40 +35,44 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     // если валидация почты и пароля прошла,
     // то аунтефик завершена верно и переходим на HomePage
     if (state.allFieldsValid) {
-      // имитируемый ответ от сервера response
+      // ответ от сервера response
       final response =
           await _login(email: state.email, password: state.password);
       // emit(state.copyWith(requestError: RequestError.unknown));
-      if (response == null) {
+      if (response != null) {
+        await UserRepository.getInstance().setItem(response.user);
+        await TokenRepository.getInstance().setItem(response.token);
+        await RefreshTokenRepository.getInstance()
+            .setItem(response.refreshToken);
         // возращение типа ошибки
         emit(state.copyWith(authenticated: true));
       } else {
-        switch (response) {
-          case LoginError.emailNotExist:
-            emit(state.copyWith(emailError: EmailError.notExist));
-            break;
-          case LoginError.wrongPassword:
-            emit(state.copyWith(passwordError: PasswordError.wrongPassword));
-            break;
-          case LoginError.other:
-            emit(state.copyWith(requestError: RequestError.unknown));
-            break;
-        }
+        // switch (response) {
+        //   case LoginError.emailNotExist:
+        //     emit(state.copyWith(emailError: EmailError.notExist));
+        //     break;
+        //   case LoginError.wrongPassword:
+        //     emit(state.copyWith(passwordError: PasswordError.wrongPassword));
+        //     break;
+        //   case LoginError.other:
+        //     emit(state.copyWith(requestError: RequestError.unknown));
+        //     break;
+        // }
       }
     }
   }
 
   // обработка ошибок ввода
-  // ИМИТАЦИЯ РАБОТЫ СЕРВЕРА , на реальном проекте немного по другому
-  Future<LoginError?> _login({
+  // работа сервера при логине
+  Future<UserWithTokensDto?> _login({
     required final String email,
     required final String password,
   }) async {
-    final successfulResponse = Random().nextBool();
-    if (successfulResponse) {
-      return null;
-    }
-    return LoginError.values[Random().nextInt(LoginError.values.length)];
+    final response = await UnauthorizedApiService.getInstance().login(
+      email: email,
+      password: password,
+    );
+    return response;
   }
 
   // валидация email
@@ -111,7 +116,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
   // валидация regularExp
   bool _passwordValid(final String password) {
-    return passwordRegexp.hasMatch(password);
+    return password.length >= 6;
   }
 
   // сброс всех прочих ошибок other

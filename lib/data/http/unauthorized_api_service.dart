@@ -1,5 +1,6 @@
 import 'package:gifts_manager/data/http/dio_provider.dart';
 import 'package:gifts_manager/data/http/model/create_account_request_dto.dart';
+import 'package:gifts_manager/data/http/model/login_request_dto.dart';
 import 'package:gifts_manager/data/http/model/user_with_tokens_dto.dart';
 import 'package:gifts_manager/data/storage/shared_preferences_data.dart';
 
@@ -28,6 +29,27 @@ class UnauthorizedApiService {
     try {
       final response = await _dio.post(
         '/auth/create',
+        data: requestBody.toJson(),
+      );
+      // конвертация из одного типа в другой
+      final userWithTokens = UserWithTokensDto.fromJson(response.data);
+      return userWithTokens;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<UserWithTokensDto?> login({
+    required final String email,
+    required final String password,
+  }) async {
+    final requestBody = LoginRequestDto(
+      email: email,
+      password: password,
+    );
+    try {
+      final response = await _dio.post(
+        '/auth/login',
         data: requestBody.toJson(),
       );
       // конвертация из одного типа в другой
