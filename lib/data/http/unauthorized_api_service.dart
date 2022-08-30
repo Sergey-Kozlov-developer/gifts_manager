@@ -1,4 +1,8 @@
+import 'package:dio/dio.dart';
+import 'package:either_dart/either.dart';
+import 'package:gifts_manager/data/http/api_error_type.dart';
 import 'package:gifts_manager/data/http/dio_provider.dart';
+import 'package:gifts_manager/data/http/model/api_error.dart';
 import 'package:gifts_manager/data/http/model/create_account_request_dto.dart';
 import 'package:gifts_manager/data/http/model/login_request_dto.dart';
 import 'package:gifts_manager/data/http/model/user_with_tokens_dto.dart';
@@ -14,7 +18,7 @@ class UnauthorizedApiService {
 
   UnauthorizedApiService._internal();
   // метод регистрации
-  Future<UserWithTokensDto?> register({
+  Future<Either<ApiError, UserWithTokensDto>> register({
     required final String email,
     required final String password,
     required final String name,
@@ -33,13 +37,13 @@ class UnauthorizedApiService {
       );
       // конвертация из одного типа в другой
       final userWithTokens = UserWithTokensDto.fromJson(response.data);
-      return userWithTokens;
+      return Right(userWithTokens);
     } catch (e) {
-      return null;
+      return Left(_getApiError(e));
     }
   }
 
-  Future<UserWithTokensDto?> login({
+  Future<Either<ApiError, UserWithTokensDto>> login({
     required final String email,
     required final String password,
   }) async {
@@ -54,9 +58,23 @@ class UnauthorizedApiService {
       );
       // конвертация из одного типа в другой
       final userWithTokens = UserWithTokensDto.fromJson(response.data);
-      return userWithTokens;
+      return Right(userWithTokens);
     } catch (e) {
-      return null;
+      return Left(_getApiError(e));
     }
+  }
+
+  ApiError _getApiError(final dynamic e) {
+    if (e is DioError) {
+      if (e.type == DioErrorType.response && e.response != null) {
+        try {
+          final apiError = ApiError.fromJson(e.response!.data);
+          return apiError;
+        } catch (apiE) {
+          return ApiError(code: ApiErrorType.unknow);
+        }
+      }
+    }
+    return ApiError(code: ApiErrorType.unknow);
   }
 }
