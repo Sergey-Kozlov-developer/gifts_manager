@@ -2,11 +2,22 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:bloc/bloc.dart';
+import 'package:dio/dio.dart';
+import 'package:either_dart/either.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
+import 'package:gifts_manager/data/http/model/api_error.dart';
+import 'package:gifts_manager/data/http/model/create_account_request_dto.dart';
+import 'package:gifts_manager/data/http/model/user_with_tokens_dto.dart';
+import 'package:gifts_manager/data/http/unauthorized_api_service.dart';
 import 'package:gifts_manager/data/model/request_error.dart';
+import 'package:gifts_manager/data/repository/refresh_token_repository.dart';
+import 'package:gifts_manager/data/repository/token_repository.dart';
+import 'package:gifts_manager/data/repository/user_repository.dart';
 import 'package:gifts_manager/data/storage/shared_preferences_data.dart';
 import 'package:gifts_manager/presentation/registration/model/errors.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
 part 'registration_event.dart';
 
@@ -52,7 +63,8 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     on<RegistrationPasswordChange>(_onPasswordChanged);
     on<RegistrationPasswordFocusLost>(_onPasswordFocusLost);
     on<RegistrationPasswordConfirmationChange>(_onPasswordConfirmationChanged);
-    on<RegistrationPasswordConfirmationFocusLost>(_onPasswordConfirmationFocusLost);
+    on<RegistrationPasswordConfirmationFocusLost>(
+        _onPasswordConfirmationFocusLost);
     on<RegistrationNameChange>(_onNameChanged);
     on<RegistrationNameFocusLost>(_onNameFocusLost);
     on<RegistrationCreateAccount>(_onCreateAccount);
@@ -85,11 +97,12 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     _highlightEmailError = true;
     emit(_calculateFieldsInfo());
   }
+
   // метод ввода пароля
   FutureOr<void> _onPasswordChanged(
-      final RegistrationPasswordChange event,
-      final Emitter<RegistrationState> emit,
-      ) {
+    final RegistrationPasswordChange event,
+    final Emitter<RegistrationState> emit,
+  ) {
     // обновление текущего знач password
     _password = event.password;
     // обновление  _passwordError
@@ -99,20 +112,21 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     // эмитим есть ли ошибка или нет. обновляем инфу с филдами
     emit(_calculateFieldsInfo());
   }
+
   // потеря фокуса пароля
   FutureOr<void> _onPasswordFocusLost(
-      final RegistrationPasswordFocusLost event,
-      final Emitter<RegistrationState> emit,
-      ) {
+    final RegistrationPasswordFocusLost event,
+    final Emitter<RegistrationState> emit,
+  ) {
     _highlightPasswordError = true;
     emit(_calculateFieldsInfo());
   }
 
   // метод ввода повторно пароля
   FutureOr<void> _onPasswordConfirmationChanged(
-      final RegistrationPasswordConfirmationChange event,
-      final Emitter<RegistrationState> emit,
-      ) {
+    final RegistrationPasswordConfirmationChange event,
+    final Emitter<RegistrationState> emit,
+  ) {
     // обновление текущего знач password
     _passwordConfirmation = event.passwordConfirmation;
     // обновление  _passwordErrorConfirmation
@@ -120,20 +134,21 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     // эмитим есть ли ошибка или нет. обновляем инфу с филдами
     emit(_calculateFieldsInfo());
   }
+
   // потеря фокуса поля повторного ввода пароля
   FutureOr<void> _onPasswordConfirmationFocusLost(
-      final RegistrationPasswordConfirmationFocusLost event,
-      final Emitter<RegistrationState> emit,
-      ) {
+    final RegistrationPasswordConfirmationFocusLost event,
+    final Emitter<RegistrationState> emit,
+  ) {
     _highlightPasswordConfirmationError = true;
     emit(_calculateFieldsInfo());
   }
 
   // метод ввода имени
   FutureOr<void> _onNameChanged(
-      final RegistrationNameChange event,
-      final Emitter<RegistrationState> emit,
-      ) {
+    final RegistrationNameChange event,
+    final Emitter<RegistrationState> emit,
+  ) {
     // обновление текущего знач имени
     _name = event.name;
     // обновление
@@ -141,11 +156,12 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     // эмитим есть ли ошибка или нет. обновляем инфу с филдами
     emit(_calculateFieldsInfo());
   }
+
   // потеря фокуса имени
   FutureOr<void> _onNameFocusLost(
-      final RegistrationNameFocusLost event,
-      final Emitter<RegistrationState> emit,
-      ) {
+    final RegistrationNameFocusLost event,
+    final Emitter<RegistrationState> emit,
+  ) {
     _highlightNameError = true;
     emit(_calculateFieldsInfo());
   }
@@ -162,21 +178,36 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     emit(_calculateFieldsInfo());
     // если есть ошибки, блокируем переход на след страницу по кнопке СОЗДАТЬ
     final haveError = _emailError != null ||
-    _passwordError != null ||
-    _passwordConfirmationError != null ||
-    _nameError != null;
+        _passwordError != null ||
+        _passwordConfirmationError != null ||
+        _nameError != null;
     if (haveError) {
       return;
     }
     emit(const RegistrationInProgress());
-    final token = await _register();
-    SharedPreferenceData.getInstance().setToken(token);
-    emit(const RegistrationCompleted());
+    final response = await _register();
+    if (response.isRight) {
+      final userWithTokens = response.right;
+      await UserRepository.getInstance().setItem(userWithTokens.user);
+      await TokenRepository.getInstance().setItem(userWithTokens.token);
+      await RefreshTokenRepository.getInstance()
+          .setItem(userWithTokens.refreshToken);
+      emit(const RegistrationCompleted());
+    } else {
+      // TODO handle error
+    }
   }
-  // имитируем поход в сеть при регистрации для возвращения токена авторизации
-  Future<String> _register() async {
-    await Future.delayed(const Duration(seconds: 2));
-    return 'token';
+
+  // реализуем запрос в сеть в сеть при регистрации для возвращения токена авторизации
+  Future<Either<ApiError, UserWithTokensDto>> _register() async {
+    final response = await UnauthorizedApiService.getInstance().register(
+      email: _email,
+      password: _password,
+      name: _name,
+      avatarUrl: _avatarBuilder(_avatarKey),
+    );
+    // TODO
+    return response;
   }
 
   // метод для сбора инфы с полей будет выдавать инфу об всех ошибках
@@ -216,6 +247,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     }
     return null;
   }
+
   // метод по ошибкам повторного ввода password
   RegistarationPasswordConfirmationError? _validatePasswordConfirmation() {
     if (_passwordConfirmation.isEmpty) {
@@ -226,6 +258,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     }
     return null;
   }
+
   // метод по ошибкам name
   RegistarationNameError? _validateName() {
     if (_name.isEmpty) {
