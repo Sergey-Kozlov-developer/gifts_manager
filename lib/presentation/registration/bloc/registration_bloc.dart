@@ -10,6 +10,9 @@ import 'package:gifts_manager/data/http/model/create_account_request_dto.dart';
 import 'package:gifts_manager/data/http/model/user_with_tokens_dto.dart';
 import 'package:gifts_manager/data/http/unauthorized_api_service.dart';
 import 'package:gifts_manager/data/model/request_error.dart';
+import 'package:gifts_manager/data/repository/refresh_token_repository.dart';
+import 'package:gifts_manager/data/repository/token_repository.dart';
+import 'package:gifts_manager/data/repository/user_repository.dart';
 import 'package:gifts_manager/data/storage/shared_preferences_data.dart';
 import 'package:gifts_manager/presentation/registration/model/errors.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
@@ -180,26 +183,26 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       return;
     }
     emit(const RegistrationInProgress());
-    final token = await _register();
-    SharedPreferenceData.getInstance().setToken(token);
-    emit(const RegistrationCompleted());
+    final response = await _register();
+    if (response == null) {
+    } else {
+      await UserRepository.getInstance().setItem(response.user);
+      await TokenRepository.getInstance().setItem(response.token);
+      await RefreshTokenRepository.getInstance().setItem(response.refreshToken);
+      emit(const RegistrationCompleted());
+    }
   }
 
   // реализуем запрос в сеть в сеть при регистрации для возвращения токена авторизации
-  Future<String> _register() async {
-    try {
-      final response = await UnauthorizedApiService.getInstance().register(
-        email: _email,
-        password: _password,
-        name: _name,
-        avatarUrl: _avatarBuilder(_avatarKey),
-      );
-      // TODO
-      return response?.token ?? 'asd';
-    } catch (e) {
-      // TODO
-    }
-    return 'token';
+  Future<UserWithTokensDto?> _register() async {
+    final response = await UnauthorizedApiService.getInstance().register(
+      email: _email,
+      password: _password,
+      name: _name,
+      avatarUrl: _avatarBuilder(_avatarKey),
+    );
+    // TODO
+    return response;
   }
 
   // метод для сбора инфы с полей будет выдавать инфу об всех ошибках
