@@ -207,7 +207,7 @@ class _PasswordTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      // подписка на ошибку ввода почты с помощью BlocSelector
+      // подписка на ошибку ввода пароля с помощью BlocSelector
       child: BlocBuilder<RegistrationBloc, RegistrationState>(
         buildWhen: (_, current) => current is RegistrationFieldsInfo,
         builder: (context, state) {
@@ -220,14 +220,14 @@ class _PasswordTextField extends StatelessWidget {
             onChanged: (text) => context
                 .read<RegistrationBloc>()
                 .add(RegistrationPasswordChange(text)),
-            // нажимаем на ОК после ввода email переходим на поле Пароль
+            // нажимаем на ОК после ввода email переходим на поле повторить Пароль
             onSubmitted: (_) => _passwordConfirmationFocusNode.requestFocus(),
             autocorrect: false,
             obscureText: true,
             keyboardType: TextInputType.visiblePassword,
             decoration: InputDecoration(
               labelText: 'Пароль',
-              // вывод текста ошибки если неверно введена почта
+              // вывод текста ошибки если неверно введен password
               errorText: error?.toString(),
             ),
           );
@@ -253,20 +253,20 @@ class _PasswordConfirmationTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      // подписка на ошибку ввода почты с помощью BlocSelector
+      // подписка на ошибку ввода повторного пароля с помощью BlocSelector
       child: BlocBuilder<RegistrationBloc, RegistrationState>(
         buildWhen: (_, current) => current is RegistrationFieldsInfo,
         builder: (context, state) {
           final fieldsInfo = state as RegistrationFieldsInfo;
           final error = fieldsInfo.passwordConfirmationError;
           return TextField(
-            // изменение фокуса поля ввода
+            // изменение фокуса поля ввода повторить пароль
             focusNode: _passwordConfirmationFocusNode,
             // логика ввода email
             onChanged: (text) => context
                 .read<RegistrationBloc>()
                 .add(RegistrationPasswordConfirmationChange(text)),
-            // нажимаем на ОК после ввода email переходим на поле Пароль
+            // нажимаем на ОК после ввода password переходим на поле повторить Пароль
             onSubmitted: (_) => _nameFocusNode.requestFocus(),
             autocorrect: false,
             obscureText: true,
@@ -296,7 +296,7 @@ class _NameTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      // подписка на ошибку ввода почты с помощью BlocSelector
+      // подписка на ошибку ввода имени с помощью BlocSelector
       child: BlocBuilder<RegistrationBloc, RegistrationState>(
         buildWhen: (_, current) => current is RegistrationFieldsInfo,
         builder: (context, state) {
@@ -309,13 +309,13 @@ class _NameTextField extends StatelessWidget {
             onChanged: (text) => context
                 .read<RegistrationBloc>()
                 .add(RegistrationNameChange(text)),
-            // нажимаем на ОК после ввода email переходим на поле Пароль
+            // нажимаем на ОК после ввода имени, полностью теряется фокус
             onSubmitted: (_) => FocusManager.instance.primaryFocus?.unfocus(),
             autocorrect: false,
             keyboardType: TextInputType.name,
             decoration: InputDecoration(
               labelText: 'Имя и фамилия',
-              // вывод текста ошибки если неверно введена почта
+              // вывод текста ошибки если неверно введена имя
               errorText: error?.toString(),
             ),
           );

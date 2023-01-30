@@ -25,6 +25,7 @@ part 'registration_state.dart';
 
 class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
   static const _defaultAvatarKey = 'test';
+  // какие символы должны быть в пароле
   static final _registrationPasswordRegexp = RegExp(r'^[a-zA-Z0-9]+$');
 
   static String _avatarBuilder(String key) =>
@@ -75,6 +76,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     final Emitter<RegistrationState> emit,
   ) {
     _avatarKey = Random().nextInt(1000000).toString();
+    // эмитим есть ли ошибка или нет. обновляем инфу с филдами
     emit(_calculateFieldsInfo());
   }
 
@@ -95,6 +97,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     final Emitter<RegistrationState> emit,
   ) {
     _highlightEmailError = true;
+    // эмитим есть ли ошибка или нет. обновляем инфу с филдами
     emit(_calculateFieldsInfo());
   }
 
@@ -119,6 +122,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     final Emitter<RegistrationState> emit,
   ) {
     _highlightPasswordError = true;
+    // эмитим есть ли ошибка или нет. обновляем инфу с филдами
     emit(_calculateFieldsInfo());
   }
 
@@ -141,6 +145,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     final Emitter<RegistrationState> emit,
   ) {
     _highlightPasswordConfirmationError = true;
+    // эмитим есть ли ошибка или нет. обновляем инфу с филдами
     emit(_calculateFieldsInfo());
   }
 
@@ -175,6 +180,7 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     _highlightPasswordError = true;
     _highlightPasswordConfirmationError = true;
     _highlightNameError = true;
+    // эмитим есть ли ошибка или нет. обновляем инфу с филдами
     emit(_calculateFieldsInfo());
     // если есть ошибки, блокируем переход на след страницу по кнопке СОЗДАТЬ
     final haveError = _emailError != null ||
