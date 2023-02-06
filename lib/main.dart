@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:gifts_manager/data/di/service_locator.dart';
 import 'package:gifts_manager/presentation/login/view/login_page.dart';
 import 'package:gifts_manager/presentation/splash/view/splash_page.dart';
 import 'package:gifts_manager/presentation/theme/dark_theme.dart';
@@ -7,6 +8,8 @@ import 'package:gifts_manager/presentation/theme/light_theme.dart';
 import 'package:gifts_manager/simple_bloc_observer.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  initServiceLocator();
   BlocOverrides.runZoned(
         () => runApp(const MyApp()),
     blocObserver: SimpleBlocObserver(),

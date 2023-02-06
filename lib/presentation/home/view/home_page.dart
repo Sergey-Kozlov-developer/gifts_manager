@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gifts_manager/data/di/service_locator.dart';
 import 'package:gifts_manager/data/http/model/user_dto.dart';
 import 'package:gifts_manager/data/repository/user_repository.dart';
 import 'package:gifts_manager/data/storage/shared_preferences_data.dart';
@@ -26,7 +27,7 @@ class HomePage extends StatelessWidget {
             const SizedBox(height: 42),
             TextButton(
               onPressed: () async {
-                await SharedPreferenceData.getInstance().setToken(null);
+                await sl.get<SharedPreferenceData>().setToken(null);
                 // если прошли регистрацию, переходим в HomePage
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (_) => const LoginPage()),

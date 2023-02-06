@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:gifts_manager/data/di/service_locator.dart';
 import 'package:gifts_manager/data/http/model/user_dto.dart';
 import 'package:gifts_manager/data/repository/base/reactive_repository.dart';
 import 'package:gifts_manager/data/storage/shared_preferences_data.dart';
@@ -9,7 +10,7 @@ class UserRepository extends ReactiveRepository<UserDto> {
   static UserRepository? _instance;
 
   factory UserRepository.getInstance() => _instance ??=
-      UserRepository._internal(SharedPreferenceData.getInstance());
+      UserRepository._internal(sl.get<SharedPreferenceData>());
 
   UserRepository._internal(this._spData);
 
